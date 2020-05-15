@@ -1,6 +1,7 @@
 import Utils.FileHandler;
 
 import java.util.*;
+
 public class NFAtoDFA {
     private List<String> alphabets;
     private List<State> states;
@@ -11,9 +12,16 @@ public class NFAtoDFA {
     private Set<Integer> nfaFinalStats;
     private int trappedStateIndex = -1;
     private List<State> reachableStates;
-private int fuck=6;
+    private String sourceFile;
+    private String desFile;
+
+    public NFAtoDFA(String sourceFilePath, String destinationFilePath) {
+        sourceFile = sourceFilePath;
+        desFile = destinationFilePath;
+    }
+
     public void parseInput() {
-        List<String> lines = FileHandler.readLines("./NFA0.txt");
+        List<String> lines = FileHandler.readLines(sourceFile);
         parseAlphabet(lines.get(0));
         parseStates(lines.get(1));
         setInitialState(lines.get(2));
@@ -105,41 +113,7 @@ private int fuck=6;
         }
     }
 
-    public void printNFATrans() {
-        for (State currState : states) {
-            for (String alphabet : currState.edges.keySet()) {
-                for (State s : currState.edges.get(alphabet))
-                    System.out.println(currState.name + " " + alphabet + " " + s.name);
-            }
-        }
-    }
-
-    public void printTrans() {
-        List<String> lines=new ArrayList<>();
-        String line="";
-
-        for(String a:alphabets)
-            line+=a+" ";
-        lines.add(line);
-
-        line="";
-        for(State s:nfaStates)
-            line+=s.name+" ";
-        lines.add(line);
-
-        lines.add(nfaStates.get(initialState).name);
-
-
-        for (State currState : nfaStates) {
-            for (String alphabet : alphabets) {
-                State temp = currState.edges.get(alphabet).iterator().next();
-                lines.add(currState.name + " " + alphabet + " " + temp.name);
-            }
-        }
-        FileHandler.writeLines("./Result.txt",lines);
-    }
-
-    public void convertToNFA() {
+    public void convertToDFA() {
         nfaStates = new ArrayList<>();
         nfaFinalStats = new HashSet<>();
 
@@ -163,9 +137,10 @@ private int fuck=6;
         }
 
     }
-    private int indexFinder(String name){
-        for(State state:states){
-            if(state.name.equals(name))
+
+    private int indexFinder(String name) {
+        for (State state : states) {
+            if (state.name.equals(name))
                 return states.indexOf(state);
         }
         return -1;
@@ -175,6 +150,9 @@ private int fuck=6;
         for (String alphabet : alphabets) {
             HashSet<State> tempStates = new HashSet<>();
             for (State state : currState.parentStates) {
+                if (finalState.contains(states.indexOf(state)) && !state.name.equals("N")) {
+                    nfaFinalStats.add(nfaStates.size());
+                }
                 if (state.edges.containsKey(alphabet)) {
                     for (State s : state.edges.get(alphabet)) {
                         tempStates.add(s);
@@ -183,7 +161,7 @@ private int fuck=6;
             }
             String name = "";
             List<State> temp = new ArrayList<>(tempStates);
-            temp.sort((s2,s1)->s1.name.compareTo(s2.name));
+            temp.sort((s2, s1) -> s1.name.compareTo(s2.name));
             tempStates = new HashSet<>(temp);
 
             for (State s : tempStates) {
@@ -208,6 +186,7 @@ private int fuck=6;
         nfaStates.add(currState);
         reachableStates.remove(0);
     }
+
     private boolean doesStateExist(String name) {
         for (State s : nfaStates) {
             if (s.name.equals(name))
@@ -230,11 +209,52 @@ private int fuck=6;
                 return s;
         return null;
     }
+
     private void addNewDFAState() {
         State newState = new State("N");
         for (String a : alphabets)
             newState.addTargetState(newState, a);
         nfaStates.add(newState);
         trappedStateIndex = nfaStates.size() - 1;
+    }
+
+    public void printNFATrans() {
+        for (State currState : states) {
+            for (String alphabet : currState.edges.keySet()) {
+                for (State s : currState.edges.get(alphabet))
+                    System.out.println(currState.name + " " + alphabet + " " + s.name);
+            }
+        }
+    }
+
+    public void printResultInFile() {
+        List<String> lines = new ArrayList<>();
+        String line = "";
+
+        for (String a : alphabets)
+            line += a + " ";
+        lines.add(line);
+
+        line = "";
+        for (State s : nfaStates)
+            line += s.name + " ";
+        lines.add(line);
+
+        lines.add(nfaStates.get(initialState).name);
+
+        line="";
+        for(int i:nfaFinalStats){
+            if(!nfaStates.get(i).name.equals("N"))
+            line+=nfaStates.get(i).name+" ";
+        }
+        lines.add(line);
+
+        for (State currState : nfaStates) {
+            for (String alphabet : alphabets) {
+                State temp = currState.edges.get(alphabet).iterator().next();
+                lines.add(currState.name + " " + alphabet + " " + temp.name);
+            }
+        }
+        FileHandler.writeLines(desFile, lines);
     }
 }

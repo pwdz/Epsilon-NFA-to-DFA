@@ -1,10 +1,9 @@
 public class Main {
     public static void main(String[] args) {
-        NFAtoDFA nfAtoDFA = new NFAtoDFA();
+        NFAtoDFA nfAtoDFA = new NFAtoDFA("./NFA4.txt","./result.txt");
         nfAtoDFA.parseInput();
         nfAtoDFA.convertEpsilonNFAtoNFA();
-//        nfAtoDFA.printNFATrans();
-        nfAtoDFA.convertToNFA();
-        nfAtoDFA.printTrans();
+        nfAtoDFA.convertToDFA();
+        nfAtoDFA.printResultInFile();
     }
 }
