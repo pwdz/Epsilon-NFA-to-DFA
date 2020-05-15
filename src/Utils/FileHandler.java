@@ -4,6 +4,10 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 public class FileHandler {
+    /** Read a file line by line.
+     * @param path path of the file
+     * @return lines of the file
+     */
     public static List<String> readLines(String path) {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(path),"Unicode"));
@@ -20,6 +24,10 @@ public class FileHandler {
         }
         return null;
     }
+    /** writes to a file line by line.
+     * @param path path of the file
+     * @param lines lines to be written to the file.
+     */
     public static void writeLines(String path,List<String>lines) {
         try {
             PrintWriter pw = new PrintWriter(new FileWriter(path));

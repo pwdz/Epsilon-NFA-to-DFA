@@ -2,24 +2,49 @@ import Utils.FileHandler;
 
 import java.util.*;
 
+/** Converts an Epsilon-NFA to DFA.
+ * @author pwdz
+ */
 public class NFAtoDFA {
+    /** Represents the NFA’s alphabet.
+     */
     private List<String> alphabets;
+    /** Represents the NFA’s states.
+     */
     private List<State> states;
+    /** Represents the NFA’s initialState's index.
+     */
     private int initialState;
+    /** Represents the NFA’s finalStates indexes.
+     */
     private Set<Integer> finalState;
     private String epsilon = "λ";
-    private List<State> nfaStates;
-    private Set<Integer> nfaFinalStats;
+    
+    /** Represents the DFA’s states.
+     */
+    private List<State> dfaStates;
+    /** Represents the DFA’s finalStates indexes.
+     */
+    private Set<Integer> dfaFinalStats;
+    /** Represents the trappedState's index for DFA.
+     */
     private int trappedStateIndex = -1;
+    /** Represents the reachable states for converting NFA to DFA.
+     */
     private List<State> reachableStates;
+    /** Represents the path for source file of NFA.
+     */
     private String sourceFile;
+    /** Represents the path for result output file.
+     */
     private String desFile;
 
     public NFAtoDFA(String sourceFilePath, String destinationFilePath) {
         sourceFile = sourceFilePath;
         desFile = destinationFilePath;
     }
-
+    /** parses the source files data.
+     */
     public void parseInput() {
         List<String> lines = FileHandler.readLines(sourceFile);
         parseAlphabet(lines.get(0));
@@ -30,14 +55,16 @@ public class NFAtoDFA {
             parseTransition(lines.get(i));
         }
     }
-
+    /** parses the alphabet.
+     */
     public void parseAlphabet(String line) {
         alphabets = new ArrayList<>();
         alphabets.add(epsilon);
         for (String s : line.trim().split(" "))
             alphabets.add(s);
     }
-
+    /** parses the states.
+     */
     public void parseStates(String line) {
         int statesCount = line.trim().split(" ").length;
         states = new ArrayList<>();
@@ -47,7 +74,8 @@ public class NFAtoDFA {
             states.add(currState);
         }
     }
-
+    /** parses the initial state.
+     */
     public void setInitialState(String line) {
         for (State currState : states)
             if (currState.name.equals(line)) {
@@ -55,7 +83,8 @@ public class NFAtoDFA {
                 break;
             }
     }
-
+    /** parses the final states.
+     */
     public void setFinalState(String line) {
         finalState = new HashSet<>();
         List<String> fStates = Arrays.asList(line.trim().split(" "));
@@ -67,7 +96,8 @@ public class NFAtoDFA {
             }
         }
     }
-
+    /** parses the transitions.
+     */
     public void parseTransition(String line) {
         String[] split = line.trim().split(" ");
         int target = -1, source = -1;
@@ -81,7 +111,10 @@ public class NFAtoDFA {
         }
         states.get(source).addTargetState(states.get(target), split[1]);
     }
-
+    /** Iterates the connected nodes by epsilon and turns the Epsilon-NFA to a NFA.
+     * Updates final states.
+     * Removes epsilons at last.
+     */
     public void convertEpsilonNFAtoNFA() {
         for (State currState : states) {
             if (currState.edges.containsKey(epsilon))
@@ -90,17 +123,19 @@ public class NFAtoDFA {
                 currState.processNonEpsilonTargets(alphabets);
             }
         }
-
+        setFinalStates();
         removeEpsilons();
     }
-
+    /** Removes every node's epsilon
+     */
     private void removeEpsilons() {
         for (State currState : states)
             if (currState.edges.containsKey(epsilon))
                 currState.edges.remove(epsilon);
         alphabets.remove(epsilon);
     }
-
+    /** Updates final states of NFA after converting Epsilon-NFA to NFA.
+     */
     private void setFinalStates() {
         for (State currState : states) {
             for (int fState : finalState) {
@@ -112,19 +147,21 @@ public class NFAtoDFA {
             }
         }
     }
-
+    /** Converts NFA to DFA
+     */
     public void convertToDFA() {
-        nfaStates = new ArrayList<>();
-        nfaFinalStats = new HashSet<>();
+        dfaStates = new ArrayList<>();
+        dfaFinalStats = new HashSet<>();
 
         reachableStates = new ArrayList<>();
         State nfaInitState = new State(states.get(initialState).name);
         reachableStates.add(nfaInitState);
 
-        processCurrStateEdges();
+        processNFA();
     }
-
-    private void processCurrStateEdges() {
+    /** Iterates over NFA initial node and DFA's newly made nodes till there's no more new nodes.
+     */
+    private void processNFA() {
         if (reachableStates.size() == 0)
             return;
         else {
@@ -132,12 +169,15 @@ public class NFAtoDFA {
                 reachableStates.get(0).parentStates = new HashSet<>();
                 reachableStates.get(0).parentStates.add(states.get(indexFinder(reachableStates.get(0).name)));
             }
-            processCurrStateParents(reachableStates.get(0));
-            processCurrStateEdges();
+            processCurrState(reachableStates.get(0));
+            processNFA();
         }
 
     }
-
+    /** Gets the index of the given name of a state in List states.
+     * @param name A String containing a state's name.
+     * @return index of the given name in stats list.
+     */
     private int indexFinder(String name) {
         for (State state : states) {
             if (state.name.equals(name))
@@ -145,13 +185,16 @@ public class NFAtoDFA {
         }
         return -1;
     }
-
-    private void processCurrStateParents(State currState) {
+    /** Connects the currState to it's neighbour nodes.
+     * Creates a trapped state if needed.
+     * @param currState the state which needs to be connected to it's neighbours.
+     */
+    private void processCurrState(State currState) {
         for (String alphabet : alphabets) {
             HashSet<State> tempStates = new HashSet<>();
             for (State state : currState.parentStates) {
                 if (finalState.contains(states.indexOf(state)) && !state.name.equals("N")) {
-                    nfaFinalStats.add(nfaStates.size());
+                    dfaFinalStats.add(dfaStates.size());
                 }
                 if (state.edges.containsKey(alphabet)) {
                     for (State s : state.edges.get(alphabet)) {
@@ -169,8 +212,8 @@ public class NFAtoDFA {
             }
             if (name.equals("")) {
                 if (trappedStateIndex == -1)
-                    addNewDFAState();
-                currState.addTargetState(nfaStates.get(trappedStateIndex), alphabet);
+                    createTrappedDFAState();
+                currState.addTargetState(dfaStates.get(trappedStateIndex), alphabet);
             } else {
                 State targetState;
                 if (doesStateExist(name)) {
@@ -183,12 +226,15 @@ public class NFAtoDFA {
                 currState.addTargetState(targetState, alphabet);
             }
         }
-        nfaStates.add(currState);
+        dfaStates.add(currState);
         reachableStates.remove(0);
     }
-
+    /** Checks by name if a state already exist's in dfaStates or reachableStates by the currState.
+     * @param name the name that needs to be checked.
+     * @return result of search.
+     */
     private boolean doesStateExist(String name) {
-        for (State s : nfaStates) {
+        for (State s : dfaStates) {
             if (s.name.equals(name))
                 return true;
         }
@@ -198,9 +244,12 @@ public class NFAtoDFA {
                     return true;
         return false;
     }
-
+    /** Gets by name if a state already exist's in dfaStates or reachableStates by the currState.
+     * @param name the name that the equivalent states needs to be returned.
+     * @return result of search.
+     */
     private State getNFAByName(String name) {
-        for (State s : nfaStates) {
+        for (State s : dfaStates) {
             if (s.name.equals(name))
                 return s;
         }
@@ -209,13 +258,14 @@ public class NFAtoDFA {
                 return s;
         return null;
     }
-
-    private void addNewDFAState() {
+    /** Creates a trapped-state for DFA.
+     */
+    private void createTrappedDFAState() {
         State newState = new State("N");
         for (String a : alphabets)
             newState.addTargetState(newState, a);
-        nfaStates.add(newState);
-        trappedStateIndex = nfaStates.size() - 1;
+        dfaStates.add(newState);
+        trappedStateIndex = dfaStates.size() - 1;
     }
 
     public void printNFATrans() {
@@ -226,7 +276,8 @@ public class NFAtoDFA {
             }
         }
     }
-
+    /** prints the DFA result in the given output path
+     */
     public void printResultInFile() {
         List<String> lines = new ArrayList<>();
         String line = "";
@@ -236,20 +287,20 @@ public class NFAtoDFA {
         lines.add(line);
 
         line = "";
-        for (State s : nfaStates)
+        for (State s : dfaStates)
             line += s.name + " ";
         lines.add(line);
 
-        lines.add(nfaStates.get(initialState).name);
+        lines.add(dfaStates.get(initialState).name);
 
         line="";
-        for(int i:nfaFinalStats){
-            if(!nfaStates.get(i).name.equals("N"))
-            line+=nfaStates.get(i).name+" ";
+        for(int i:dfaFinalStats){
+            if(!dfaStates.get(i).name.equals("N"))
+            line+=dfaStates.get(i).name+" ";
         }
         lines.add(line);
 
-        for (State currState : nfaStates) {
+        for (State currState : dfaStates) {
             for (String alphabet : alphabets) {
                 State temp = currState.edges.get(alphabet).iterator().next();
                 lines.add(currState.name + " " + alphabet + " " + temp.name);
