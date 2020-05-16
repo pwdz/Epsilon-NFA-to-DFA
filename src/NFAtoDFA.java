@@ -3,7 +3,7 @@ import Utils.FileHandler;
 import java.util.*;
 
 /** Converts an Epsilon-NFA to DFA.
- * @author Mohammad ebrahim Adibzadeh
+ * @author pwdz
  */
 public class NFAtoDFA {
     /** Represents the NFA’s alphabet.
