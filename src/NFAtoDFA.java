@@ -3,7 +3,7 @@ import Utils.FileHandler;
 import java.util.*;
 
 /** Converts an Epsilon-NFA to DFA.
- * @author pwdz
+ * @author Mohammad ebrahim Adibzadeh
  */
 public class NFAtoDFA {
     /** Represents the NFA’s alphabet.
@@ -120,7 +120,8 @@ public class NFAtoDFA {
             if (currState.edges.containsKey(epsilon))
                 currState.processEpsilonTargets(currState.edges.get(epsilon));
             for (String alphabets : currState.edges.keySet()) {
-                currState.processNonEpsilonTargets(alphabets);
+                if(!alphabets.equals(epsilon))
+                    currState.processNonEpsilonTargets(alphabets);
             }
         }
         setFinalStates();

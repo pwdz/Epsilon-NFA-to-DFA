@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 public class FileHandler {
-    /** Read a file line by line.
+    /** Read a file line by line(Encoding: UNICODE).
      * @param path path of the file
      * @return lines of the file
      */
