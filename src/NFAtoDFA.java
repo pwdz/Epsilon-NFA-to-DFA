@@ -39,9 +39,13 @@ public class NFAtoDFA {
      */
     private String desFile;
 
-    public NFAtoDFA(String sourceFilePath, String destinationFilePath) {
+    public NFAtoDFA(String sourceFilePath) {
         sourceFile = sourceFilePath;
-        desFile = destinationFilePath;
+        String[] s = sourceFile.trim().split("/");
+        String fileName = s[s.length-1];
+        s = fileName.trim().split(".txt");
+        fileName = s[0];
+        desFile ="./Tests/Outputs/"+fileName+"Result.txt";
     }
     /** parses the source files data.
      */
